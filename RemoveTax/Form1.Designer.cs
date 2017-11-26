@@ -32,13 +32,13 @@
             this.lSelected = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.btBrowse = new System.Windows.Forms.Button();
-            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.txtPath = new System.Windows.Forms.TextBox();
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
             this.cbYear = new System.Windows.Forms.ComboBox();
             this.label1 = new System.Windows.Forms.Label();
             this.btRemove = new System.Windows.Forms.Button();
-            this.label2 = new System.Windows.Forms.Label();
-            this.checkBox1 = new System.Windows.Forms.CheckBox();
+            this.TestingLabel = new System.Windows.Forms.Label();
+            this.checkTesting = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // lSelected
@@ -69,13 +69,13 @@
             this.btBrowse.UseVisualStyleBackColor = true;
             this.btBrowse.Click += new System.EventHandler(this.btBrowse_Click);
             // 
-            // textBox1
+            // txtPath
             // 
-            this.textBox1.Location = new System.Drawing.Point(12, 12);
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(242, 20);
-            this.textBox1.TabIndex = 8;
-            this.textBox1.KeyDown += new System.Windows.Forms.KeyEventHandler(this.textBox1_KeyDown);
+            this.txtPath.Location = new System.Drawing.Point(12, 12);
+            this.txtPath.Name = "txtPath";
+            this.txtPath.Size = new System.Drawing.Size(242, 20);
+            this.txtPath.TabIndex = 8;
+            this.txtPath.KeyDown += new System.Windows.Forms.KeyEventHandler(this.textBox1_KeyDown);
             // 
             // cbYear
             // 
@@ -104,44 +104,44 @@
             this.btRemove.UseVisualStyleBackColor = true;
             this.btRemove.Click += new System.EventHandler(this.btRemove_Click);
             // 
-            // label2
+            // TestingLabel
             // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(12, 109);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(377, 39);
-            this.label2.TabIndex = 15;
-            this.label2.Text = "Test ctx.ini written to \"ctx.iniT\".  \r\nApplication files are copied, and not dele" +
+            this.TestingLabel.AutoSize = true;
+            this.TestingLabel.Location = new System.Drawing.Point(12, 109);
+            this.TestingLabel.Name = "TestingLabel";
+            this.TestingLabel.Size = new System.Drawing.Size(377, 39);
+            this.TestingLabel.TabIndex = 15;
+            this.TestingLabel.Text = "Test ctx.ini written to \"ctx.iniT\".  \r\nApplication files are copied, and not dele" +
     "ted.\r\nClient folders will need to be moved back to original location in WFX32\\\\C" +
     "lient.\r\n";
             // 
-            // checkBox1
+            // checkTesting
             // 
-            this.checkBox1.AutoSize = true;
-            this.checkBox1.Checked = true;
-            this.checkBox1.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox1.Location = new System.Drawing.Point(276, 89);
-            this.checkBox1.Name = "checkBox1";
-            this.checkBox1.Size = new System.Drawing.Size(61, 17);
-            this.checkBox1.TabIndex = 16;
-            this.checkBox1.Text = "Testing";
-            this.checkBox1.UseVisualStyleBackColor = true;
-            this.checkBox1.CheckedChanged += new System.EventHandler(this.checkBox1_CheckedChanged);
+            this.checkTesting.AutoSize = true;
+            this.checkTesting.Checked = true;
+            this.checkTesting.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkTesting.Location = new System.Drawing.Point(276, 89);
+            this.checkTesting.Name = "checkTesting";
+            this.checkTesting.Size = new System.Drawing.Size(61, 17);
+            this.checkTesting.TabIndex = 16;
+            this.checkTesting.Text = "Testing";
+            this.checkTesting.UseVisualStyleBackColor = true;
+            this.checkTesting.CheckedChanged += new System.EventHandler(this.checkBox1_CheckedChanged);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(417, 167);
-            this.Controls.Add(this.checkBox1);
-            this.Controls.Add(this.label2);
+            this.Controls.Add(this.checkTesting);
+            this.Controls.Add(this.TestingLabel);
             this.Controls.Add(this.btRemove);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.cbYear);
             this.Controls.Add(this.lSelected);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.btBrowse);
-            this.Controls.Add(this.textBox1);
+            this.Controls.Add(this.txtPath);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
@@ -158,13 +158,13 @@
         private System.Windows.Forms.Label lSelected;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Button btBrowse;
-        private System.Windows.Forms.TextBox textBox1;
+        private System.Windows.Forms.TextBox txtPath;
         private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
         private System.Windows.Forms.ComboBox cbYear;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Button btRemove;
-        private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.CheckBox checkBox1;
+        private System.Windows.Forms.Label TestingLabel;
+        private System.Windows.Forms.CheckBox checkTesting;
     }
 }
 

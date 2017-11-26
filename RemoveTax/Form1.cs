@@ -1,12 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using Microsoft.Win32;
 
@@ -21,7 +15,8 @@ namespace WindowsFormsApplication3
             InitializeComponent();
         }
 
-        string GetWFX32()
+        //Retrieve location of WFX32 folder from registry
+        private string GetWFX32()
         {
             string strWFX32;
             strWFX32 = Registry.GetValue("HKEY_CURRENT_USER\\SOFTWARE\\CCHWinFx", "NetIniLocation", "none").ToString();
@@ -30,12 +25,13 @@ namespace WindowsFormsApplication3
             strWFX32 = strWFX32.TrimEnd('\0');
             if (strWFX32 == "none")
             {
-                MessageBox.Show("Please Run Workstation Setup before running this program");
-                Application.Exit();
+                //MessageBox.Show("Please Run Workstation Setup before running this program");
+                //Application.Exit();
             }
             return strWFX32;
         }
 
+        //Create a dialog box to specify a different folder location
         private void btBrowse_Click(object sender, EventArgs e)
         {
             string sPath;
@@ -44,7 +40,7 @@ namespace WindowsFormsApplication3
             if (result == DialogResult.OK)
             {
                 sPath = folderBrowserDialog1.SelectedPath;
-                textBox1.Text = sPath;
+                txtPath.Text = sPath;
                 lSelected.Text = sPath;
                 sWFX32 = sPath;
             }
@@ -52,18 +48,21 @@ namespace WindowsFormsApplication3
 
         private void textBox1_KeyDown(object sender, KeyEventArgs e)
         {
+            //Only update values if Enter key is pressed from text entry
             if (e.KeyCode == Keys.Enter)
             {
-                sWFX32 = lSelected.Text = textBox1.Text;
+                sWFX32 = lSelected.Text = txtPath.Text;
             }
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            textBox1.Text = lSelected.Text = sWFX32 = GetWFX32();
+            //get WFX32 location from directory, and then set it to display
+            txtPath.Text = lSelected.Text = sWFX32 = GetWFX32();
             fillYears();
         }
 
+        //Fill entries in cbYear combo box for many years
         private void fillYears()
         {
             string syear;
@@ -77,6 +76,7 @@ namespace WindowsFormsApplication3
             }
         }
 
+        //Moves files in a specified directory, this is used to aviod file conflicts with old archivals, and conflicts with file.move
         private void MoveSubdirectory(string Path, string destination)
         {
             string ActiveItem;
@@ -93,7 +93,7 @@ namespace WindowsFormsApplication3
                 //If file DOES exist, move file under dated file name
                 else
                 {
-                    ActiveItem = ActiveItem + DateTime.Now.Month + "-" + DateTime.Now.Day;
+                    ActiveItem = ActiveItem + "-" + DateTime.Now.Month + "-" + DateTime.Now.Day;
                     if (File.Exists(ActiveItem))
                     {
                         File.Copy(f, ActiveItem, true);
@@ -117,14 +117,15 @@ namespace WindowsFormsApplication3
                     MoveSubdirectory(g, ActiveItem);
                 }
             }
-            if (!checkBox1.Checked)
+            //Only delete the source files if not Testing
+            if (!checkTesting.Checked)
                 Directory.Delete(Path);
         }
 
         private void btRemove_Click(object sender, EventArgs e)
         {
             string TenYear = sWFX32 + "\\10Year";
-            string Year, TenClient, TenInstall, TenUser, Working, ActiveItem;
+            string Year, TenClient, TenInstall, TenUser;
             if (!Directory.Exists(TenYear))
                 Directory.CreateDirectory(TenYear);
             if (cbYear.SelectedIndex == -1)
@@ -137,42 +138,78 @@ namespace WindowsFormsApplication3
             TenUser = TenYear + "\\User";
             TenInstall = TenYear + "\\Install";
             //Start Move of Client Return files to 10Year;
-            Working = sWFX32 + "\\Client";
+                CopyClients(Year, TenClient);
+            //Start Copy of Permission key from Install
+                CopyInstall(Year, TenInstall);
+            //Start Copy of User
+                CopyUser(TenUser);
+            //Start edit of ctx.ini
+                EditCTXini(TenYear, Year, sWFX32 + "\\ctx.ini");
+            //Remove application files
+                RemoveApplication(TenYear, Year);
+            //Prompt to run rebuild;
+            if (!checkTesting.Checked)
+            {
+                string RebuildExe = sWFX32 + "\\rebuild.exe";
+                MessageBox.Show("Please run a System Rebuild \r\nUnder High-Level Options check \"Synchonize Client Links\"\r\nUnser Low-Level Options select \"Synchronize Product Types\"");
+                if (File.Exists(RebuildExe))
+                    System.Diagnostics.Process.Start(RebuildExe);
+            }
+            else
+                //I could include something to copy the moved clients back... TODO
+                MessageBox.Show(TestingLabel.Text);
+
+        }
+
+        private void CopyClients(string Year, string TenClient)
+        {
+            string Working = sWFX32 + "\\Client";
+            string ActiveItem;
             if (!Directory.Exists(TenClient))
                 Directory.CreateDirectory(TenClient);
+            //only proceed if WFX32\Client folder exists
             if (Directory.Exists(Working))
             {
-
+                string destination;
                 foreach (string d in Directory.GetDirectories(Working))
                 {
+                    //get folder name from full path to folder
                     ActiveItem = d.Substring(d.LastIndexOf('\\') + 1);
                     if (ActiveItem.StartsWith(Year))
                     {
-                        ActiveItem = TenClient + "\\" + ActiveItem;
-                        //If destination directory exists, copy all files from source folder
-                        if (Directory.Exists(ActiveItem))
+                        destination = TenClient + "\\" + ActiveItem;
+                        //If destination directory exists, copy all files from source folder using MoveSubDirecotry method
+                        if (Directory.Exists(destination))
                         {
-                            string destination = ActiveItem;
                             MoveSubdirectory(d, destination);
                         }
                         else
                         {
-                            Directory.Move(d, ActiveItem);
+                            Directory.Move(d, destination);
                         }
                     }
                 }
+                //Get all files in Client folder with extension ".C00"
                 foreach (string f in Directory.GetFiles(Working, "*.C00"))
                 {
                     ActiveItem = f.Substring(f.LastIndexOf('\\'));
                     ActiveItem = TenClient + ActiveItem;
+                    //do not overwrite files from previous archival attempts
                     if (!File.Exists(ActiveItem))
                         File.Copy(f, ActiveItem);
                 }
             }
-            //Start Copy of Permission key from Install
-            Working = sWFX32 + "\\Install\\" + Year;
+        }
+
+        private void CopyInstall(string Year, string TenInstall)
+        {
+            string Working = sWFX32 + "\\Install";
+            string ActiveItem;
             if (!Directory.Exists(TenInstall))
                 Directory.CreateDirectory(TenInstall);
+            if (File.Exists(Working + "\\PermInfo.dat"))
+                File.Copy(Working + "\\PermInfo.dat", TenInstall + "\\PermInfo.dat", true);
+            Working = Working + "\\" + Year;
             if (Directory.Exists(Working))
             {
                 TenInstall = TenInstall + "\\" + Year;
@@ -186,11 +223,16 @@ namespace WindowsFormsApplication3
                         File.Copy(f, ActiveItem);
                 }
             }
-            //Start Copy of User
-            Working = sWFX32 + "\\user";
+        }
+
+        private void CopyUser(string TenUser)
+        {
+            string Working = sWFX32 + "\\user";
+            string ActiveItem;
             if (!Directory.Exists(TenUser))
                 Directory.CreateDirectory(TenUser);
             if (Directory.Exists(Working))
+            {
                 foreach (string f in Directory.GetFiles(Working, "*.usr"))
                 {
                     ActiveItem = f.Substring(f.LastIndexOf('\\'));
@@ -198,22 +240,33 @@ namespace WindowsFormsApplication3
                     if (!File.Exists(ActiveItem))
                         File.Copy(f, ActiveItem);
                 }
-            //Start Copy of ctx.ini
-            ActiveItem = sWFX32 + "\\ctx.ini";
+                foreach (string f in Directory.GetFiles(Working, "*.uex"))
+                {
+                    ActiveItem = f.Substring(f.LastIndexOf('\\'));
+                    ActiveItem = TenUser + ActiveItem;
+                    if (!File.Exists(ActiveItem))
+                        File.Copy(f, ActiveItem);
+                }
+            }
+        }
+
+        private void EditCTXini(string TenYear, string Year, string ActiveItem)
+        {
             if (File.Exists(ActiveItem))
             {
+                //COPY CTX.INI BEFORE ANY EDITS
                 if (!File.Exists(TenYear + "\\ctx.ini"))
                     File.Copy(ActiveItem, TenYear + "\\ctx.ini");
-            //Remove products from CTX.ini
-            //TODO break this into smaller relevant methods for each section
+                
+                //Prompt if ctx.ini should be changed
                 DialogResult result = MessageBox.Show("Scan CTX.ini for entries for Year " + Year, "CTX.ini Removal", MessageBoxButtons.YesNo);
                 if (result == DialogResult.Yes)
                 {
-                    string input, output = "";
+                    //Remove products from CTX.ini
+                    string input, output = string.Empty;
                     FileStream file = new FileStream(ActiveItem, FileMode.Open, FileAccess.ReadWrite);
                     using (StreamReader reader = new StreamReader(file, Encoding.ASCII))
                     {
-
                         input = reader.ReadToEnd();
                         reader.Close();
                     }
@@ -222,9 +275,10 @@ namespace WindowsFormsApplication3
                     string line;
                     index = 0;
                     endindex = input.IndexOf('\r', index);
+
                     while (endindex > 0 && index < input.Length)
                     {
-
+                        //Begin reading ctx.ini file line by line for processing within sections.
                         line = input.Substring(index, (endindex - index));
                         switch (line)
                         {
@@ -300,6 +354,7 @@ namespace WindowsFormsApplication3
                                 }
                         }
                     }
+                    //Begin re-reading ctx.ini to remove entire section for removed year product entires.
                     //Remove Icon for Tax Year
                     line = "[" + Year + " Tax Preparation]";
                     if (output.Contains(line))
@@ -320,8 +375,8 @@ namespace WindowsFormsApplication3
                         string ending = output.Substring(endindex + 1);
                         output = beginning + ending;
                     }
-                    //if checked, do not make permanent changes to ctx.ini, write to test file ctx.init
-                    if (checkBox1.Checked)
+                    //if testing is checked, do not make permanent changes to ctx.ini, write to test file ctx.init
+                    if (checkTesting.Checked)
                         ActiveItem = ActiveItem + "t";
                     //write output to file
                     using (StreamWriter writer = new StreamWriter(ActiveItem))
@@ -332,8 +387,12 @@ namespace WindowsFormsApplication3
                     file.Close();
                 }
             }
-            //Remove application files
-            if (!checkBox1.Checked)
+        }
+
+        private void RemoveApplication(string TenYear, string Year)
+        {
+            string ActiveItem;
+            if (!checkTesting.Checked)
             {
                 try
                 {
@@ -368,48 +427,32 @@ namespace WindowsFormsApplication3
             {
                 ActiveItem = sWFX32 + "\\ctx" + Year + ".ini";
                 if (File.Exists(ActiveItem))
-                    //File.Delete(ActiveItem);
                     File.Copy(ActiveItem, TenYear + "\\ctxyear.ini", true);
                 ActiveItem = sWFX32 + "\\CtxTp" + Year + ".exe";
                 if (File.Exists(ActiveItem))
-                    //File.Delete(ActiveItem);
                     File.Copy(ActiveItem, TenYear + "\\ctxtp.exe", true);
                 ActiveItem = sWFX32 + "\\Tax" + Year + ".exe";
                 if (File.Exists(ActiveItem))
-                    //File.Delete(ActiveItem);
                     File.Copy(ActiveItem, TenYear + "\\tax.exe", true);
                 ActiveItem = sWFX32 + "\\IJS.BKD";
                 if (File.Exists(ActiveItem))
-                    //File.Delete(ActiveItem);
                     File.Copy(ActiveItem, TenYear + "\\ijs.bkd", true);
                 ActiveItem = sWFX32 + "\\IJS.BKX";
                 if (File.Exists(ActiveItem))
-                    //File.Delete(ActiveItem);
                     File.Copy(ActiveItem, TenYear + "\\ijs.bkx", true);
                 ActiveItem = sWFX32 + "\\IJS.dat";
                 if (File.Exists(ActiveItem))
-                    //File.Delete(ActiveItem);
                     File.Copy(ActiveItem, TenYear + "\\ijs.dat", true);
                 ActiveItem = sWFX32 + "\\IJS.idx";
                 if (File.Exists(ActiveItem))
-                    //File.Delete(ActiveItem);
                     File.Copy(ActiveItem, TenYear + "\\ijs.idx", true);
             }
-            //Prompt to run rebuild;
-            if (!checkBox1.Checked)
-            {
-                ActiveItem = sWFX32 + "\\rebuild.exe";
-                MessageBox.Show("Please run a System Rebuild \r\nUnder High-Level Options check \"Synchonize Client Links\"\r\nUnser Low-Level Options select \"Synchronize Product Types\"");
-                if (File.Exists(ActiveItem))
-                    System.Diagnostics.Process.Start(sWFX32 + "\\rebuild.exe");
-            }
-            else
-                MessageBox.Show("Test ctx.ini written to \"ctx.iniT\".\nApplication files are copied, and not deleted.\nClient folders will need to be moved back to original location in WFX32\\Client.");
         }
+
 
         private void checkBox1_CheckedChanged(object sender, EventArgs e)
         {
-            label2.Visible = checkBox1.Checked;
+            TestingLabel.Visible = checkTesting.Checked;
         }
     }
 }
